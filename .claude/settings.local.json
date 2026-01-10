@@ -10,7 +10,10 @@
       "Bash(gh run list:*)",
       "Bash(gh repo view:*)",
       "Bash(gh api:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Skill(deploy-prod)",
+      "Bash(gh run watch:*)",
+      "Bash(gh run view:*)"
     ]
   }
 }

@@ -100,3 +100,15 @@ done
 2. Uses AWS credentials from GitHub Secrets
 3. Commits and pushes `.prod-versions` file with deployment record
 4. Production updates health endpoint with deployed version
+
+---
+
+# Execution
+
+1. Trigger the deployment workflow and capture the run ID
+2. Watch the workflow run until completion
+3. Get the expected version from `.prod-versions` file
+4. Poll the health endpoint until the deployed version matches
+5. Report final status to the user
+
+Use `gh run watch` with a timeout of up to 3 minutes. For verification, poll the health endpoint up to 12 times (10 second intervals = 2 minutes) before reporting the final status.
