@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run pytest:*)",
+      "Bash(echo:*)",
+      "Bash(curl:*)",
+      "Bash(git:*)",
+      "Bash(gh auth status:*)",
+      "Bash(gh workflow run:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh repo view:*)",
+      "Bash(gh api:*)",
+      "Bash(bash:*)"
+    ]
+  }
+}
