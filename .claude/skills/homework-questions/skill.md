@@ -96,7 +96,7 @@ Read the solutions from the cohort directory to get correct answers:
 ~/git/data-engineering-zoomcamp/cohorts/2026/01-docker-terraform/solution.md
 ```
 
-**If no solution file exists** (e.g., homework says "Will be added after the due date"), create questions WITHOUT the `correct_answer` field. Submit like usual - students can still submit, but there will be no auto-grading.
+**If no solution file exists** (e.g., homework says "Will be added after the due date"), create questions WITHOUT the `correct_answer` field and WITHOUT the `answer_type` field. Submit like usual - students can still submit, but there will be no auto-grading.
 
 ## Step 3: Create Questions
 
