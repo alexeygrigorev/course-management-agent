@@ -28,13 +28,47 @@ Full URLs:
 
 ## Authentication
 
-```bash
-# Get auth token from env
-TOKEN=${AUTH_TOKEN}
+Use `${AUTH_TOKEN}` environment variable:
 
-# Or set it manually
-TOKEN="your-token-here"
+```bash
+-H "Authorization: Token ${AUTH_TOKEN}"
 ```
+
+## API Request Best Practices
+
+### ALWAYS follow this pattern for every request:
+
+```bash
+# 1. Make request and pipe to jq for formatted output
+curl -s -X POST "URL" \
+  -H "Authorization: Token ${AUTH_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{...}' | jq '.'
+```
+
+### ALWAYS verify after creating:
+
+```bash
+# 2. Check the response has "success": true
+# 3. Verify items were created (check IDs in response)
+```
+
+### NEVER do these:
+
+```bash
+# WRONG - Complex command substitution can fail (leaves newlines, spaces)
+-H "Authorization: Token $(cat .env | grep AUTH_TOKEN | cut -d= -f2)"
+
+# WRONG - Run multiple requests without verifying between them
+
+# WRONG - Assume "no output" means "failed" (silent success is possible)
+
+# WRONG - Hardcode the token
+```
+
+### Critical Rule:
+
+**The API creates NEW items every time - it never replaces or updates existing items.** Check for duplicates before creating.
 
 ## Getting Course Content (GET)
 

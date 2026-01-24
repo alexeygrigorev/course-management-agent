@@ -19,10 +19,12 @@ This skill provides commands to get and create questions for homeworks via the A
 
 0. **Find homework slugs**: If you don't know the homework slug, first use the `course-content` skill to list all homeworks and get their slugs
 1. **Read the homework file**: typically it's named homework.md
-2. **Read solutions file**: Analyze the content of the homework folder. There could be the solutions.md file (or similar) with the ansers
-3. **Create questions**: POST questions with correct answers to the homework
-4. **Open homework**: Always include `"state": "OP"` when creating questions to open the homework
-5. **Provide summary**: List all questions with their answers and include the homework link
+2. **Read solutions file**: Analyze the content of the homework folder. There could be the solutions.md file (or similar) with the answers
+3. **Check existing questions**: ALWAYS verify current question count BEFORE creating
+4. **Create questions**: POST questions with correct answers to the homework
+5. **Verify creation**: ALWAYS check question count AFTER creating and confirm `"success": true` in response
+6. **Open homework**: Always include `"state": "OP"` when creating questions to open the homework
+7. **Provide summary**: List all questions with their answers and include the homework link
 
 ## API Endpoint
 
@@ -37,7 +39,42 @@ Full URLs:
 
 ## Authentication
 
-`AUTH_TOKEN` environment varialbe
+`AUTH_TOKEN` environment variable
+
+## API Request Best Practices
+
+### ALWAYS follow this pattern for every request:
+
+```bash
+# 1. Make request and pipe to jq for formatted output
+curl -s -X POST "URL" \
+  -H "Authorization: Token ${AUTH_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{...}' | jq '.'
+```
+
+### ALWAYS verify after creating:
+
+```bash
+# 2. Check the response has "success": true
+# 3. Verify the actual count of questions
+curl -s -X GET "URL" -H "Authorization: Token ${AUTH_TOKEN}" | jq '.questions | length'
+```
+
+### NEVER do these:
+
+```bash
+# WRONG - Complex command substitution can fail (leaves newlines, spaces)
+-H "Authorization: Token $(cat .env | grep AUTH_TOKEN | cut -d= -f2)"
+
+# WRONG - Run multiple requests without verifying between them
+
+# WRONG - Assume "no output" means "failed" (silent success is possible)
+```
+
+### Critical Rule:
+
+**ALWAYS verify the question count BEFORE and AFTER creating.** The API adds new questions every time - it never replaces or deduplicates existing questions.
 
 ## Step 1: Find Homework Slugs
 
