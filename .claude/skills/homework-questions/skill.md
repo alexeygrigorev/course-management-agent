@@ -96,7 +96,9 @@ Read the solutions from the cohort directory to get correct answers:
 ~/git/data-engineering-zoomcamp/cohorts/2026/01-docker-terraform/solution.md
 ```
 
-**If no solution file exists** (e.g., homework says "Will be added after the due date"), create questions WITHOUT the `correct_answer` field and WITHOUT the `answer_type` field. Submit like usual - students can still submit, but there will be no auto-grading.
+**If no solution file exists** (e.g., homework says "Will be added after the due date"), create questions WITHOUT the `correct_answer` field. Submit like usual - students can still submit, but there will be no auto-grading.
+
+**General rule**: Do NOT specify `answer_type` unless explicitly asked. It is optional and defaults to appropriate value.
 
 ## Step 3: Create Questions
 
@@ -111,7 +113,6 @@ curl -X POST "https://dev.courses.datatalks.club/data/<course_slug>/homework/<ho
       {
         "text": "What does SQL stand for?",
         "question_type": "MC",
-        "answer_type": "EXS",
         "possible_answers": ["Structured Query Language", "Simple Query Language", "Standard Query Language"],
         "correct_answer": "1",
         "scores_for_correct_answer": 1
