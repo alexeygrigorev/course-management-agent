@@ -13,7 +13,9 @@
       "Bash(bash:*)",
       "Skill(deploy-prod)",
       "Bash(gh run watch:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Skill(course-content)",
+      "Skill(homework-questions)"
     ]
   }
 }

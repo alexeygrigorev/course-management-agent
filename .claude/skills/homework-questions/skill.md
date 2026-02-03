@@ -41,22 +41,38 @@ Full URLs:
 
 `AUTH_TOKEN` environment variable
 
+### Troubleshooting AUTH_TOKEN
+
+If the API returns authentication errors, verify the token is set:
+
+```bash
+# Check if token is set (should show length, not "NOT SET")
+echo "AUTH_TOKEN is: $(if [ -n "$AUTH_TOKEN" ]; then echo "SET (${#AUTH_TOKEN} chars)"; else echo "NOT SET"; fi)"
+
+# Test with a simple GET request
+curl -s -X GET "https://courses.datatalks.club/data/<course_slug>/content" \
+  -H "Authorization: Token ${AUTH_TOKEN}"
+```
+
+If the token is not set, ensure it's loaded from `.env` or set explicitly.
+
 ## API Request Best Practices
 
 ### ALWAYS follow this pattern for every request:
 
 ```bash
-# 1. Make request and pipe to jq for formatted output
+# 1. Make POST request (do NOT pipe to jq - may cause silent output)
 curl -s -X POST "URL" \
   -H "Authorization: Token ${AUTH_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d '{...}' | jq '.'
+  -d '{...}'
 ```
 
 ### ALWAYS verify after creating:
 
 ```bash
-# 2. Check the response has "success": true
+# 2. Check the response with a separate GET request (safe to pipe to jq)
+curl -s -X GET "URL" -H "Authorization: Token ${AUTH_TOKEN}" | jq '.'
 # 3. Verify the actual count of questions
 curl -s -X GET "URL" -H "Authorization: Token ${AUTH_TOKEN}" | jq '.questions | length'
 ```
