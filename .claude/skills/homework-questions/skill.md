@@ -71,10 +71,8 @@ curl -s -X POST "URL" \
 ### ALWAYS verify after creating:
 
 ```bash
-# 2. Check the response with a separate GET request (safe to pipe to jq)
-curl -s -X GET "URL" -H "Authorization: Token ${AUTH_TOKEN}" | jq '.'
-# 3. Verify the actual count of questions
-curl -s -X GET "URL" -H "Authorization: Token ${AUTH_TOKEN}" | jq '.questions | length'
+# 2. Check the response with a separate GET request
+curl -s -X GET "URL" -H "Authorization: Token ${AUTH_TOKEN}"
 ```
 
 ### NEVER do these:
@@ -117,6 +115,24 @@ Read the solutions from the cohort directory to get correct answers:
 **General rule**: Do NOT specify `answer_type` unless explicitly asked. It is optional and defaults to appropriate value.
 
 ## Step 3: Create Questions
+
+### Question Naming
+
+**Use minimal, concise question text**. Students can see full details in homework.md.
+
+- Prefix with "Q1:", "Q2:", etc.
+- Keep text short - focus on the core question
+- Omit lengthy context, setup, or explanations
+
+**Example:**
+
+```json
+// GOOD - concise
+"text": "Q1: dbt run --select int_trips_unioned builds which models?"
+
+// BAD - too verbose
+"text": "Given a dbt project with staging models (stg_green_tripdata, stg_yellow_tripdata) and an intermediate model int_trips_unioned that depends on both staging models. If you run dbt run --select int_trips_unioned, what models will be built?"
+```
 
 ### Basic Question (Single Answer - MC)
 
@@ -225,6 +241,12 @@ Homework link: https://courses.datatalks.club/<course_slug>/homework/<homework_s
 | 1 | What is... | Option A | A, B, C, D |
 | 2 | Select all... | Option A, C | A, B, C, D |
 ```
+
+## Important Notes
+
+- **NEVER use jq** in curl commands - even if installed, it can cause issues on some systems
+- **Keep question text minimal** - students get full context from homework.md file
+- **ALWAYS verify question count** before and after creating (API adds, never replaces)
 
 ## Common Errors
 

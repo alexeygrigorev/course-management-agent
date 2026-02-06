@@ -54,7 +54,7 @@ If the token is not set, ensure it's loaded from `.env` or set explicitly.
 ### ALWAYS follow this pattern for every request:
 
 ```bash
-# 1. Make POST request (do NOT pipe to jq - may cause silent output)
+# 1. Make POST request (NEVER use jq - output raw JSON)
 curl -s -X POST "URL" \
   -H "Authorization: Token ${AUTH_TOKEN}" \
   -H "Content-Type: application/json" \
@@ -64,8 +64,8 @@ curl -s -X POST "URL" \
 ### ALWAYS verify after creating:
 
 ```bash
-# 2. Check the response with a separate GET request (safe to pipe to jq)
-curl -s -X GET "URL" -H "Authorization: Token ${AUTH_TOKEN}" | jq '.'
+# 2. Check the response with a separate GET request
+curl -s -X GET "URL" -H "Authorization: Token ${AUTH_TOKEN}"
 # 3. Verify items were created (check IDs, success status, question count)
 ```
 
@@ -122,6 +122,24 @@ curl -X GET "https://courses.datatalks.club/data/<course_slug>/content" \
 ```
 
 ## Creating Homeworks
+
+### Question Naming
+
+**Use minimal, concise question text**. Students can see full details in homework.md.
+
+- Prefix with "Q1:", "Q2:", etc.
+- Keep text short - focus on the core question
+- Omit lengthy context, setup, or explanations
+
+**Example:**
+
+```json
+// GOOD - concise
+"text": "Q1: dbt run --select int_trips_unioned builds which models?"
+
+// BAD - too verbose
+"text": "Given a dbt project with staging models (stg_green_tripdata, stg_yellow_tripdata) and an intermediate model int_trips_unioned that depends on both staging models. If you run dbt run --select int_trips_unioned, what models will be built?"
+```
 
 ### Basic Homework (No Questions)
 
@@ -400,6 +418,12 @@ Partial success is supported - if some items fail, others are still created:
   ]
 }
 ```
+
+## Important Notes
+
+- **NEVER use jq** in curl commands - even if installed, output raw JSON only
+- **Keep question text minimal** - students get full context from homework.md file
+- **API creates NEW items** - never replaces or updates existing items (check for duplicates)
 
 ## Common Errors
 
