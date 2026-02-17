@@ -28,26 +28,11 @@ Full URLs:
 
 ## Authentication
 
-Use `${AUTH_TOKEN}` environment variable:
+The `AUTH_TOKEN` environment variable is already set — no need to source `.env` or do anything. Just use it directly:
 
 ```bash
 -H "Authorization: Token ${AUTH_TOKEN}"
 ```
-
-### Troubleshooting AUTH_TOKEN
-
-If the API returns authentication errors, verify the token is set:
-
-```bash
-# Check if token is set (should show length, not "NOT SET")
-echo "AUTH_TOKEN is: $(if [ -n "$AUTH_TOKEN" ]; then echo "SET (${#AUTH_TOKEN} chars)"; else echo "NOT SET"; fi)"
-
-# Test with a simple GET request
-curl -s -X GET "https://courses.datatalks.club/data/<course_slug>/content" \
-  -H "Authorization: Token ${AUTH_TOKEN}"
-```
-
-If the token is not set, ensure it's loaded from `.env` or set explicitly.
 
 ## API Request Best Practices
 
