@@ -116,23 +116,13 @@ Read the solutions from the cohort directory to get correct answers:
 
 ## Step 3: Create Questions
 
-### Question Naming
+### IMPORTANT: Question Text Formatting
 
-**Use minimal, concise question text**. Students can see full details in homework.md.
+Do NOT add prefixes like "Question 1.", "Q1.", "Question 2." etc. to the question `text` field. Strip any numbering prefix and use only the title/question itself.
 
-- Prefix with "Q1:", "Q2:", etc.
-- Keep text short - focus on the core question
-- Omit lengthy context, setup, or explanations
-
-**Example:**
-
-```json
-// GOOD - concise
-"text": "Q1: dbt run --select int_trips_unioned builds which models?"
-
-// BAD - too verbose
-"text": "Given a dbt project with staging models (stg_green_tripdata, stg_yellow_tripdata) and an intermediate model int_trips_unioned that depends on both staging models. If you run dbt run --select int_trips_unioned, what models will be built?"
-```
+Example from homework file: `### Question 1. Bruin Pipeline Structure`
+- **WRONG**: `"text": "Question 1. Bruin Pipeline Structure"`
+- **CORRECT**: `"text": "Bruin Pipeline Structure"`
 
 ### Basic Question (Single Answer - MC)
 
