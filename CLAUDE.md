@@ -30,8 +30,8 @@ All course content is located in `~/git/`:
 
 ## Available Skills
 
-- `course-content` - Get/create homeworks and projects via API
-- `homework-questions` - Get/create questions for homeworks via API
+- `course-content` - Full CRUD for courses, homeworks, and projects via `/api/` REST API
+- `homework-questions` - Full CRUD for homework questions via `/api/` REST API
 - `deploy-prod` - Trigger production deployment workflow
 
 ## Courses on Production

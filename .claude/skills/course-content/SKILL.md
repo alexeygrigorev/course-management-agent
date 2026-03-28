@@ -1,13 +1,13 @@
 ---
 name: course-content
-description: Get or add homeworks and projects to courses via API using curl
+description: Manage courses, homeworks, and projects via REST API (list, create, update, delete)
 ---
 
 # Course Content API
 
 ## Overview
 
-This skill provides commands to get and create homeworks and projects for courses via the API endpoint. All items are created with `state=CLOSED` (not visible to students).
+This skill provides commands to manage courses, homeworks, and projects via the REST API. Supports full CRUD: list, create, update state/dates/description, and delete.
 
 ## Configuration
 
@@ -15,20 +15,40 @@ This skill provides commands to get and create homeworks and projects for course
 - **Dev instance**: `https://dev.courses.datatalks.club`
 - **Auth token**: Available as `AUTH_TOKEN` environment variable
 
-## API Endpoint
+## API Endpoints
+
+### Courses
 
 ```
-GET /data/<course_slug>/content - Get all homeworks and projects
-POST /data/<course_slug>/content - Create new homeworks and projects
+GET /api/courses/                              - List all courses
+GET /api/courses/<course_slug>/                - Course details with homeworks & projects
 ```
 
-Full URLs:
-- Production: `https://courses.datatalks.club/data/<course_slug>/content`
-- Dev: `https://dev.courses.datatalks.club/data/<course_slug>/content`
+### Homeworks
+
+```
+GET    /api/courses/<course_slug>/homeworks/          - List homeworks
+POST   /api/courses/<course_slug>/homeworks/          - Create homework(s)
+PATCH  /api/courses/<course_slug>/homeworks/<id>/     - Update homework
+DELETE /api/courses/<course_slug>/homeworks/<id>/     - Delete homework (closed only)
+```
+
+### Projects
+
+```
+GET    /api/courses/<course_slug>/projects/           - List projects
+POST   /api/courses/<course_slug>/projects/           - Create project(s)
+PATCH  /api/courses/<course_slug>/projects/<id>/      - Update project
+DELETE /api/courses/<course_slug>/projects/<id>/      - Delete project (closed only)
+```
+
+Full URL example:
+- Production: `https://courses.datatalks.club/api/courses/ml-zoomcamp-2026/homeworks/`
+- Dev: `https://dev.courses.datatalks.club/api/courses/ml-zoomcamp-2026/homeworks/`
 
 ## Authentication
 
-The `AUTH_TOKEN` environment variable is already set — no need to source `.env` or do anything. Just use it directly:
+The `AUTH_TOKEN` environment variable is already set — just use it directly:
 
 ```bash
 -H "Authorization: Token ${AUTH_TOKEN}"
@@ -39,7 +59,7 @@ The `AUTH_TOKEN` environment variable is already set — no need to source `.env
 ### ALWAYS follow this pattern for every request:
 
 ```bash
-# 1. Make POST request (NEVER use jq - output raw JSON)
+# 1. Make request (NEVER use jq - output raw JSON)
 curl -s -X POST "URL" \
   -H "Authorization: Token ${AUTH_TOKEN}" \
   -H "Content-Type: application/json" \
@@ -51,237 +71,251 @@ curl -s -X POST "URL" \
 ```bash
 # 2. Check the response with a separate GET request
 curl -s -X GET "URL" -H "Authorization: Token ${AUTH_TOKEN}"
-# 3. Verify items were created (check IDs, success status, question count)
+# 3. Verify items were created (check IDs, question count)
 ```
 
 ### NEVER do these:
 
 ```bash
-# WRONG - Complex command substitution can fail (leaves newlines, spaces)
+# WRONG - Complex command substitution can fail
 -H "Authorization: Token $(cat .env | grep AUTH_TOKEN | cut -d= -f2)"
 
 # WRONG - Run multiple requests without verifying between them
 
-# WRONG - Assume "no output" means "failed" (silent success is possible)
-
 # WRONG - Hardcode the token
 ```
 
-### Critical Rule:
-
-**The API creates NEW items every time - it never replaces or updates existing items.** Check for duplicates before creating.
-
-## Getting Course Content (GET)
+## Listing Courses
 
 ```bash
-curl -X GET "https://courses.datatalks.club/data/<course_slug>/content" \
+curl -s -X GET "https://courses.datatalks.club/api/courses/" \
   -H "Authorization: Token ${AUTH_TOKEN}"
 ```
 
 **Response:**
 ```json
 {
-  "success": true,
-  "course": "course-slug",
+  "courses": [
+    {"slug": "ml-zoomcamp-2026", "title": "ML Zoomcamp 2026", "description": "...", "finished": false}
+  ]
+}
+```
+
+## Getting Course Details
+
+```bash
+curl -s -X GET "https://courses.datatalks.club/api/courses/<course_slug>/" \
+  -H "Authorization: Token ${AUTH_TOKEN}"
+```
+
+**Response includes homeworks and projects with their IDs:**
+```json
+{
+  "slug": "ml-zoomcamp-2026",
+  "title": "ML Zoomcamp 2026",
   "homeworks": [
-    {
-      "id": 123,
-      "slug": "hw-1",
-      "title": "Homework 1",
-      "due_date": "2025-03-15T23:59:59Z",
-      "state": "CL",
-      "questions_count": 5
-    }
+    {"id": 123, "slug": "hw1", "title": "Homework 1", "due_date": "...", "state": "CL"}
   ],
   "projects": [
-    {
-      "id": 456,
-      "slug": "project-1",
-      "title": "Project 1",
-      "submission_due_date": "2025-03-20T23:59:59Z",
-      "peer_review_due_date": "2025-03-27T23:59:59Z",
-      "state": "CL"
-    }
+    {"id": 456, "slug": "project1", "title": "Project 1", "submission_due_date": "...", "peer_review_due_date": "...", "state": "CL"}
   ]
 }
 ```
 
 ## Creating Homeworks
 
-### Question Naming
-
-**Use minimal, concise question text**. Students can see full details in homework.md.
-
-- Prefix with "Q1:", "Q2:", etc.
-- Keep text short - focus on the core question
-- Omit lengthy context, setup, or explanations
-
-**Example:**
-
-```json
-// GOOD - concise
-"text": "Q1: dbt run --select int_trips_unioned builds which models?"
-
-// BAD - too verbose
-"text": "Given a dbt project with staging models (stg_green_tripdata, stg_yellow_tripdata) and an intermediate model int_trips_unioned that depends on both staging models. If you run dbt run --select int_trips_unioned, what models will be built?"
-```
-
-### Basic Homework (No Questions)
+### Single Homework
 
 ```bash
-curl -X POST "https://courses.datatalks.club/data/<course_slug>/content" \
+curl -s -X POST "https://courses.datatalks.club/api/courses/<course_slug>/homeworks/" \
   -H "Authorization: Token ${AUTH_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
-    "homeworks": [
-      {
-        "name": "Homework 1",
-        "slug": "hw-1",
-        "due_date": "2025-03-15T23:59:59Z",
-        "description": "Optional description"
-      }
-    ]
+    "name": "Homework 1",
+    "slug": "hw1",
+    "due_date": "2026-03-15T23:59:59Z",
+    "description": "Optional description"
   }'
+```
+
+### Bulk Create (Multiple Homeworks)
+
+Send a JSON array:
+
+```bash
+curl -s -X POST "https://courses.datatalks.club/api/courses/<course_slug>/homeworks/" \
+  -H "Authorization: Token ${AUTH_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {"name": "Week 1: Introduction", "due_date": "2026-03-01T23:59:59Z"},
+    {"name": "Week 2: Data Types", "due_date": "2026-03-08T23:59:59Z"}
+  ]'
 ```
 
 ### Homework With Questions
 
 ```bash
-curl -X POST "https://courses.datatalks.club/data/<course_slug>/content" \
+curl -s -X POST "https://courses.datatalks.club/api/courses/<course_slug>/homeworks/" \
   -H "Authorization: Token ${AUTH_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
-    "homeworks": [
+    "name": "Homework: SQL Basics",
+    "slug": "hw-sql-basics",
+    "due_date": "2026-03-15T23:59:59Z",
+    "questions": [
       {
-        "name": "Homework: SQL Basics",
-        "slug": "hw-sql-basics",
-        "due_date": "2025-03-15T23:59:59Z",
-        "description": "Practice SQL queries",
-        "questions": [
-          {
-            "text": "What does SQL stand for?",
-            "question_type": "MC",
-            "answer_type": "EXS",
-            "possible_answers": ["Structured Query Language", "Simple Query Language", "Standard Query Language"],
-            "correct_answer": "1",
-            "scores_for_correct_answer": 1
-          },
-          {
-            "text": "Write a SELECT statement to get all users from the 'users' table",
-            "question_type": "FF",
-            "answer_type": "CTS",
-            "correct_answer": "SELECT",
-            "scores_for_correct_answer": 2
-          }
-        ]
+        "text": "What does SQL stand for?",
+        "question_type": "MC",
+        "possible_answers": ["Structured Query Language", "Simple Query Language"],
+        "correct_answer": "1",
+        "scores_for_correct_answer": 1
       }
     ]
   }'
 ```
 
-### Multiple Homeworks
+**Response (201):**
+```json
+{
+  "created": [
+    {"id": 123, "slug": "hw-sql-basics", "title": "Homework: SQL Basics", "state": "CL", "questions_count": 1, ...}
+  ]
+}
+```
+
+All homeworks are created with `state=CL` (closed). Use PATCH to open them.
+
+## Updating Homeworks (PATCH)
+
+Use the homework **ID** (from GET response) to update fields:
 
 ```bash
-curl -X POST "https://courses.datatalks.club/data/<course_slug>/content" \
+# Open a homework
+curl -s -X PATCH "https://courses.datatalks.club/api/courses/<course_slug>/homeworks/<id>/" \
   -H "Authorization: Token ${AUTH_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d '{
-    "homeworks": [
-      {
-        "name": "Week 1: Introduction",
-        "due_date": "2025-03-01T23:59:59Z"
-      },
-      {
-        "name": "Week 2: Data Types",
-        "due_date": "2025-03-08T23:59:59Z"
-      },
-      {
-        "name": "Week 3: Functions",
-        "due_date": "2025-03-15T23:59:59Z"
-      }
-    ]
-  }'
+  -d '{"state": "OP"}'
+
+# Update multiple fields
+curl -s -X PATCH "https://courses.datatalks.club/api/courses/<course_slug>/homeworks/<id>/" \
+  -H "Authorization: Token ${AUTH_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{"state": "OP", "due_date": "2026-04-01T23:59:59Z", "description": "Updated description"}'
+```
+
+### Patchable Homework Fields
+
+| Field | Description |
+|-------|-------------|
+| `state` | `CL` (Closed), `OP` (Open), `SC` (Scored) |
+| `title` | Homework title |
+| `description` | Homework description |
+| `due_date` | Due date (ISO 8601) |
+| `learning_in_public_cap` | Learning in public cap |
+| `homework_url_field` | Show homework URL field (boolean) |
+| `time_spent_lectures_field` | Show time spent on lectures field (boolean) |
+| `time_spent_homework_field` | Show time spent on homework field (boolean) |
+| `faq_contribution_field` | Show FAQ contribution field (boolean) |
+
+## Deleting Homeworks
+
+Only **closed** homeworks can be deleted:
+
+```bash
+curl -s -X DELETE "https://courses.datatalks.club/api/courses/<course_slug>/homeworks/<id>/" \
+  -H "Authorization: Token ${AUTH_TOKEN}"
 ```
 
 ## Creating Projects
 
-### Basic Project
+### Single Project
 
 ```bash
-curl -X POST "https://courses.datatalks.club/data/<course_slug>/content" \
+curl -s -X POST "https://courses.datatalks.club/api/courses/<course_slug>/projects/" \
   -H "Authorization: Token ${AUTH_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
-    "projects": [
-      {
-        "name": "Project 1: Build a Dashboard",
-        "slug": "project-1-dashboard",
-        "submission_due_date": "2025-03-20T23:59:59Z",
-        "peer_review_due_date": "2025-03-27T23:59:59Z",
-        "description": "Create an interactive dashboard"
-      }
-    ]
+    "name": "Project 1",
+    "slug": "project1",
+    "submission_due_date": "2026-03-20T23:59:59Z",
+    "peer_review_due_date": "2026-03-27T23:59:59Z",
+    "description": "Optional description"
   }'
 ```
 
-### Multiple Projects
+### Bulk Create (Multiple Projects)
 
 ```bash
-curl -X POST "https://courses.datatalks.club/data/<course_slug>/content" \
+curl -s -X POST "https://courses.datatalks.club/api/courses/<course_slug>/projects/" \
   -H "Authorization: Token ${AUTH_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d '{
-    "projects": [
-      {
-        "name": "Project 1: ETL Pipeline",
-        "submission_due_date": "2025-03-20T23:59:59Z",
-        "peer_review_due_date": "2025-03-27T23:59:59Z"
-      },
-      {
-        "name": "Project 2: ML Model",
-        "submission_due_date": "2025-04-10T23:59:59Z",
-        "peer_review_due_date": "2025-04-17T23:59:59Z"
-      }
-    ]
-  }'
+  -d '[
+    {"name": "Midterm", "submission_due_date": "2026-03-20T23:59:59Z", "peer_review_due_date": "2026-03-27T23:59:59Z"},
+    {"name": "Capstone", "submission_due_date": "2026-05-01T23:59:59Z", "peer_review_due_date": "2026-05-08T23:59:59Z"}
+  ]'
 ```
 
-## Creating Both Homeworks and Projects
+All projects are created with `state=CL` (closed). Use PATCH to update state.
+
+## Updating Projects (PATCH)
 
 ```bash
-curl -X POST "https://courses.datatalks.club/data/<course_slug>/content" \
+# Open a project for submissions
+curl -s -X PATCH "https://courses.datatalks.club/api/courses/<course_slug>/projects/<id>/" \
   -H "Authorization: Token ${AUTH_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d '{
-    "homeworks": [
-      {
-        "name": "Homework 1",
-        "due_date": "2025-03-15T23:59:59Z"
-      }
-    ],
-    "projects": [
-      {
-        "name": "Project 1",
-        "submission_due_date": "2025-03-20T23:59:59Z",
-        "peer_review_due_date": "2025-03-27T23:59:59Z"
-      }
-    ]
-  }'
+  -d '{"state": "CS"}'
+```
+
+### Patchable Project Fields
+
+| Field | Description |
+|-------|-------------|
+| `state` | `CL` (Closed), `CS` (Collecting Submissions), `PR` (Peer Reviewing), `CO` (Completed) |
+| `title` | Project title |
+| `description` | Project description |
+| `submission_due_date` | Submission deadline (ISO 8601) |
+| `peer_review_due_date` | Peer review deadline (ISO 8601) |
+| `learning_in_public_cap_project` | LiP cap for project |
+| `learning_in_public_cap_review` | LiP cap for review |
+| `number_of_peers_to_evaluate` | Number of peers to review |
+| `points_for_peer_review` | Points for peer review |
+| `time_spent_project_field` | Show time spent field (boolean) |
+| `problems_comments_field` | Show problems/comments field (boolean) |
+| `faq_contribution_field` | Show FAQ contribution field (boolean) |
+
+## Deleting Projects
+
+Only **closed** projects can be deleted:
+
+```bash
+curl -s -X DELETE "https://courses.datatalks.club/api/courses/<course_slug>/projects/<id>/" \
+  -H "Authorization: Token ${AUTH_TOKEN}"
 ```
 
 ## Field Reference
 
-### Homework Fields
+### Homework Creation Fields
 
 | Field | Required | Description |
 |-------|----------|-------------|
 | `name` | Yes | Homework title |
 | `slug` | No | URL-friendly identifier (auto-generated from name if omitted) |
-| `due_date` | Yes | Due date in ISO 8601 format (e.g., `2025-03-15T23:59:59Z`) |
+| `due_date` | Yes | Due date in ISO 8601 format (e.g., `2026-03-15T23:59:59Z`) |
 | `description` | No | Homework description (defaults to empty string) |
 | `questions` | No | Array of question objects |
 
-### Question Fields
+### Project Creation Fields
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Project title |
+| `slug` | No | URL-friendly identifier (auto-generated from name if omitted) |
+| `submission_due_date` | Yes | Submission deadline in ISO 8601 format |
+| `peer_review_due_date` | Yes | Peer review deadline in ISO 8601 format |
+| `description` | No | Project description (defaults to empty string) |
+
+### Question Fields (inline with homework creation)
 
 | Field | Required | Description |
 |-------|----------|-------------|
@@ -292,129 +326,39 @@ curl -X POST "https://courses.datatalks.club/data/<course_slug>/content" \
 | `correct_answer` | No | Correct answer (index for MC/CB, value for others) |
 | `scores_for_correct_answer` | No | Points for correct answer (default: 1) |
 
-### Project Fields
+## Question Naming
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `name` | Yes | Project title |
-| `slug` | No | URL-friendly identifier (auto-generated from name if omitted) |
-| `submission_due_date` | Yes | Submission deadline in ISO 8601 format |
-| `peer_review_due_date` | Yes | Peer review deadline in ISO 8601 format |
-| `description` | No | Project description (defaults to empty string) |
+**Use minimal, concise question text**. Students can see full details in homework.md.
 
-## Question Types
+```json
+// GOOD - concise
+"text": "dbt run --select int_trips_unioned builds which models?"
 
-| Code | Name | Description |
-|------|------|-------------|
-| `MC` | Multiple Choice | Single correct answer from a list of options |
-| `FF` | Free Form | Short text answer (1-2 sentences) |
-| `FL` | Free Form Long | Long text answer (essays, explanations) |
-| `CB` | Checkboxes | Multiple correct answers from a list of options |
-
-## Answer Types
-
-| Code | Name | Description |
-|------|------|-------------|
-| `ANY` | Any | Any input is accepted (no validation) |
-| `FLT` | Float | Decimal number validation (e.g., 3.14, -0.5) |
-| `INT` | Integer | Whole number validation (e.g., 1, 42, -7) |
-| `EXS` | Exact String | Answer must match exactly (case-sensitive) |
-| `CTS` | Contains String | Answer must contain the specified text |
+// BAD - too verbose
+"text": "Given a dbt project with staging models..."
+```
 
 ## Date Formats
 
 Both ISO formats are supported:
-- `2025-03-15T23:59:59Z` (UTC with Z)
-- `2025-03-15T23:59:59+00:00` (UTC with offset)
-
-## Response Format
-
-### GET Response
-```json
-{
-  "success": true,
-  "course": "course-slug",
-  "homeworks": [
-    {
-      "id": 123,
-      "slug": "hw-1",
-      "title": "Homework 1",
-      "due_date": "2025-03-15T23:59:59Z",
-      "state": "CL",
-      "questions_count": 5
-    }
-  ],
-  "projects": [
-    {
-      "id": 456,
-      "slug": "project-1",
-      "title": "Project 1",
-      "submission_due_date": "2025-03-20T23:59:59Z",
-      "peer_review_due_date": "2025-03-27T23:59:59Z",
-      "state": "CL"
-    }
-  ]
-}
-```
-
-### POST Response
-```json
-{
-  "success": true,
-  "course": "course-slug",
-  "created_homeworks": [
-    {
-      "id": 123,
-      "slug": "hw-1",
-      "title": "Homework 1",
-      "due_date": "2025-03-15T23:59:59Z",
-      "state": "CL",
-      "questions_count": 2
-    }
-  ],
-  "created_projects": [
-    {
-      "id": 456,
-      "slug": "project-1",
-      "title": "Project 1",
-      "submission_due_date": "2025-03-20T23:59:59Z",
-      "peer_review_due_date": "2025-03-27T23:59:59Z",
-      "state": "CL"
-    }
-  ],
-  "errors": []
-}
-```
-
-## Error Handling
-
-Partial success is supported - if some items fail, others are still created:
-
-```json
-{
-  "success": true,
-  "course": "ml-zoomcamp",
-  "created_homeworks": [
-    {"id": 123, "slug": "hw-1", ...}
-  ],
-  "created_projects": [],
-  "errors": [
-    {"homework": "Duplicate", "error": "Homework with this slug already exists"}
-  ]
-}
-```
+- `2026-03-15T23:59:59Z` (UTC with Z)
+- `2026-03-15T23:59:59+00:00` (UTC with offset)
 
 ## Important Notes
 
-- **NEVER use jq** in curl commands - even if installed, output raw JSON only
+- **NEVER use jq** in curl commands - output raw JSON only
 - **Keep question text minimal** - students get full context from homework.md file
-- **API creates NEW items** - never replaces or updates existing items (check for duplicates)
+- **POST creates NEW items** - check for duplicates before creating
+- **Use PATCH to change state** - homeworks/projects are created as closed
+- **DELETE only works on closed items** - close first if needed
 
 ## Common Errors
 
 | Error | Cause | Solution |
 |-------|-------|----------|
 | `Authentication token required` | Missing/invalid token | Check `AUTH_TOKEN` env var |
-| `Course not found` | Invalid course slug | Verify course exists |
+| `Course not found` | Invalid course slug | Use GET `/api/courses/` to list courses |
 | `already exists` | Slug conflict | Use a different slug |
 | `Invalid date format` | Malformed date | Use ISO 8601 format |
+| `Only closed homeworks can be deleted` | Trying to delete non-closed | PATCH state to CL first |
+| `Cannot update field: X` | Invalid field in PATCH | Check patchable fields list |
