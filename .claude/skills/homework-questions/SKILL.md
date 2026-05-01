@@ -1,13 +1,13 @@
 ---
 name: homework-questions
-description: Manage homework questions via REST API (list, create, update, delete)
+description: Manage homework questions via REST API
 ---
 
 # Homework Questions API
 
 ## Overview
 
-This skill provides commands to manage questions for homeworks via the REST API. Supports full CRUD: list, create, update, and delete questions.
+This skill provides commands to manage questions for homeworks via the REST API. Supports list, create, update, and guarded delete.
 
 ## Configuration
 
@@ -31,8 +31,9 @@ This skill provides commands to manage questions for homeworks via the REST API.
 ```
 GET    /api/courses/<course_slug>/homeworks/<homework_id>/questions/                - List questions
 POST   /api/courses/<course_slug>/homeworks/<homework_id>/questions/                - Create question(s)
+GET    /api/courses/<course_slug>/homeworks/<homework_id>/questions/<question_id>/  - Question detail
 PATCH  /api/courses/<course_slug>/homeworks/<homework_id>/questions/<question_id>/  - Update question
-DELETE /api/courses/<course_slug>/homeworks/<homework_id>/questions/<question_id>/  - Delete question
+DELETE /api/courses/<course_slug>/homeworks/<homework_id>/questions/<question_id>/  - Guarded delete
 ```
 
 Full URL example:
@@ -48,6 +49,17 @@ The `AUTH_TOKEN` environment variable is already set — just use it directly:
 ```bash
 -H "Authorization: Token ${AUTH_TOKEN}"
 ```
+
+## Generated API Specification
+
+Before changing questions, fetch the generated OpenAPI spec from the target environment and treat it as the source of truth:
+
+```bash
+curl -s "https://courses.datatalks.club/api/openapi.json" \
+  -H "Authorization: Token ${AUTH_TOKEN}"
+```
+
+The OpenAPI endpoint is token-protected. Use it for current routes, request bodies, responses, and delete safety rules. This skill file is workflow guidance.
 
 ## API Request Best Practices
 
@@ -82,6 +94,8 @@ curl -s -X GET "https://courses.datatalks.club/api/courses/<course_slug>/" \
 ```
 
 This returns all homeworks with their **IDs**, slugs, titles, and states. Use the `id` field for question endpoints.
+
+Question detail responses include `answers_count`, `can_delete`, and `delete_blockers`.
 
 ## Step 2: Read Solutions File
 
@@ -217,6 +231,8 @@ curl -s -X PATCH "https://courses.datatalks.club/api/courses/<course_slug>/homew
 
 ## Deleting Questions
 
+Questions can be deleted only when they have no answers. Do not delete questions from a homework that has collected submissions; deleting answered questions would delete submitted answer data, so the API rejects it.
+
 ```bash
 curl -s -X DELETE "https://courses.datatalks.club/api/courses/<course_slug>/homeworks/<hw_id>/questions/<question_id>/" \
   -H "Authorization: Token ${AUTH_TOKEN}"
@@ -293,6 +309,7 @@ Homework link: https://courses.datatalks.club/<course_slug>/homework/<homework_s
 - **ALWAYS verify question count** before and after creating (API adds, never replaces)
 - **Use homework ID, not slug** for the questions endpoint
 - **Open homework via PATCH** on the homework endpoint, not in the questions request
+- **DELETE is guarded** - questions with existing answers cannot be deleted
 
 ## Common Errors
 
@@ -303,3 +320,4 @@ Homework link: https://courses.datatalks.club/<course_slug>/homework/<homework_s
 | `Invalid JSON` | Malformed JSON | Check JSON syntax |
 | `Cannot update field: X` | Invalid field in PATCH | Check patchable fields list |
 | `text is required` | Missing text in create | Provide `text` field |
+| `Cannot delete question with existing answers` | Question has submitted answers | Do not delete; update only if appropriate |

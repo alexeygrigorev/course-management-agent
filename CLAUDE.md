@@ -30,9 +30,20 @@ All course content is located in `~/git/`:
 
 ## Available Skills
 
-- `course-content` - Full CRUD for courses, homeworks, and projects via `/api/` REST API
-- `homework-questions` - Full CRUD for homework questions via `/api/` REST API
+- `course-content` - Manage courses, homeworks, and projects via `/api/` REST API with guarded deletes
+- `homework-questions` - Manage homework questions via `/api/` REST API with guarded deletes
 - `deploy-prod` - Trigger production deployment workflow
+
+## API Source of Truth
+
+Before changing course content, fetch the generated OpenAPI specification from the target environment:
+
+```bash
+curl -s "https://courses.datatalks.club/api/openapi.json" \
+  -H "Authorization: Token ${AUTH_TOKEN}"
+```
+
+Use the generated OpenAPI spec as the source of truth for current routes, request bodies, responses, authentication, and delete safety rules. Local skill docs are workflow guidance only.
 
 ## Courses on Production
 
@@ -93,5 +104,5 @@ Examples:
 | `OP` | Open |
 | `SC` | Scored (closed) |
 | `CO` | Completed |
-| `PR` | Peer Review |
-| `CS` | Capstone Submission |
+| `PR` | Peer Reviewing |
+| `CS` | Collecting Submissions |

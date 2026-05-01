@@ -1,13 +1,13 @@
 ---
 name: course-content
-description: Manage courses, homeworks, and projects via REST API (list, create, update, delete)
+description: Manage courses, homeworks, and projects via REST API
 ---
 
 # Course Content API
 
 ## Overview
 
-This skill provides commands to manage courses, homeworks, and projects via the REST API. Supports full CRUD: list, create, update state/dates/description, and delete.
+This skill provides commands to manage courses, homeworks, and projects via the REST API. Supports list, create, update state/dates/description, and guarded delete.
 
 ## Configuration
 
@@ -21,7 +21,9 @@ This skill provides commands to manage courses, homeworks, and projects via the 
 
 ```
 GET /api/courses/                              - List all courses
+POST /api/courses/                             - Create course
 GET /api/courses/<course_slug>/                - Course details with homeworks & projects
+PATCH /api/courses/<course_slug>/              - Update course
 ```
 
 ### Homeworks
@@ -29,8 +31,13 @@ GET /api/courses/<course_slug>/                - Course details with homeworks &
 ```
 GET    /api/courses/<course_slug>/homeworks/          - List homeworks
 POST   /api/courses/<course_slug>/homeworks/          - Create homework(s)
+GET    /api/courses/<course_slug>/homeworks/<id>/     - Homework detail
 PATCH  /api/courses/<course_slug>/homeworks/<id>/     - Update homework
-DELETE /api/courses/<course_slug>/homeworks/<id>/     - Delete homework (closed only)
+DELETE /api/courses/<course_slug>/homeworks/<id>/     - Guarded delete
+GET    /api/courses/<course_slug>/homeworks/by-slug/<slug>/    - Detail by slug
+PUT    /api/courses/<course_slug>/homeworks/by-slug/<slug>/    - Create/update by slug
+PATCH  /api/courses/<course_slug>/homeworks/by-slug/<slug>/    - Update by slug
+DELETE /api/courses/<course_slug>/homeworks/by-slug/<slug>/    - Guarded delete by slug
 ```
 
 ### Projects
@@ -38,8 +45,13 @@ DELETE /api/courses/<course_slug>/homeworks/<id>/     - Delete homework (closed 
 ```
 GET    /api/courses/<course_slug>/projects/           - List projects
 POST   /api/courses/<course_slug>/projects/           - Create project(s)
+GET    /api/courses/<course_slug>/projects/<id>/      - Project detail
 PATCH  /api/courses/<course_slug>/projects/<id>/      - Update project
-DELETE /api/courses/<course_slug>/projects/<id>/      - Delete project (closed only)
+DELETE /api/courses/<course_slug>/projects/<id>/      - Guarded delete
+GET    /api/courses/<course_slug>/projects/by-slug/<slug>/     - Detail by slug
+PUT    /api/courses/<course_slug>/projects/by-slug/<slug>/     - Create/update by slug
+PATCH  /api/courses/<course_slug>/projects/by-slug/<slug>/     - Update by slug
+DELETE /api/courses/<course_slug>/projects/by-slug/<slug>/     - Guarded delete by slug
 ```
 
 Full URL example:
@@ -53,6 +65,17 @@ The `AUTH_TOKEN` environment variable is already set — just use it directly:
 ```bash
 -H "Authorization: Token ${AUTH_TOKEN}"
 ```
+
+## Generated API Specification
+
+Before changing course content, fetch the generated OpenAPI spec from the target environment and treat it as the source of truth:
+
+```bash
+curl -s "https://courses.datatalks.club/api/openapi.json" \
+  -H "Authorization: Token ${AUTH_TOKEN}"
+```
+
+The OpenAPI endpoint is token-protected. Use it for current routes, request bodies, responses, and delete safety rules. This skill file is workflow guidance.
 
 ## API Request Best Practices
 
@@ -121,6 +144,8 @@ curl -s -X GET "https://courses.datatalks.club/api/courses/<course_slug>/" \
   ]
 }
 ```
+
+Homework and project detail responses include `submissions_count`, `can_delete`, and `delete_blockers`. Prefer the `by-slug` endpoints for corrections when working from course repository files. Use `PUT` on `by-slug` routes for idempotent publish/rerun workflows.
 
 ## Creating Homeworks
 
@@ -219,7 +244,14 @@ curl -s -X PATCH "https://courses.datatalks.club/api/courses/<course_slug>/homew
 
 ## Deleting Homeworks
 
-Only **closed** homeworks can be deleted:
+Homeworks can be deleted only when both conditions are true:
+
+- The homework is `CL` closed.
+- The homework has no submissions.
+
+Do not use delete for a homework that has ever collected submissions. The API rejects deletion instead of deleting submission data.
+
+For idempotent publishing, `PUT /api/courses/<course_slug>/homeworks/by-slug/<slug>/` creates the homework if missing or updates it if present. If the payload includes `questions` for an existing homework, the API replaces the current questions only when the homework is closed and has no submissions.
 
 ```bash
 curl -s -X DELETE "https://courses.datatalks.club/api/courses/<course_slug>/homeworks/<id>/" \
@@ -286,7 +318,14 @@ curl -s -X PATCH "https://courses.datatalks.club/api/courses/<course_slug>/proje
 
 ## Deleting Projects
 
-Only **closed** projects can be deleted:
+Projects can be deleted only when both conditions are true:
+
+- The project is `CL` closed.
+- The project has no submissions.
+
+Do not use delete for a project that has ever collected submissions. The API rejects deletion instead of deleting submission data.
+
+For idempotent publishing, `PUT /api/courses/<course_slug>/projects/by-slug/<slug>/` creates the project if missing or updates it if present.
 
 ```bash
 curl -s -X DELETE "https://courses.datatalks.club/api/courses/<course_slug>/projects/<id>/" \
@@ -350,7 +389,7 @@ Both ISO formats are supported:
 - **Keep question text minimal** - students get full context from homework.md file
 - **POST creates NEW items** - check for duplicates before creating
 - **Use PATCH to change state** - homeworks/projects are created as closed
-- **DELETE only works on closed items** - close first if needed
+- **DELETE is guarded** - only delete closed homeworks/projects with no submissions
 
 ## Common Errors
 
@@ -361,4 +400,7 @@ Both ISO formats are supported:
 | `already exists` | Slug conflict | Use a different slug |
 | `Invalid date format` | Malformed date | Use ISO 8601 format |
 | `Only closed homeworks can be deleted` | Trying to delete non-closed | PATCH state to CL first |
+| `Cannot delete homework with existing submissions` | Homework has submissions | Do not delete; leave it closed |
+| `Only closed projects can be deleted` | Trying to delete non-closed | PATCH state to CL first |
+| `Cannot delete project with existing submissions` | Project has submissions | Do not delete; leave it closed |
 | `Cannot update field: X` | Invalid field in PATCH | Check patchable fields list |
