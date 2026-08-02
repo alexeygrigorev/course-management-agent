@@ -209,6 +209,23 @@ Only use `CB` (checkboxes) if explicitly requested - it requires students to sel
 "correct_answer": "4,5"
 ```
 
+### MC with multiple accepted answers (radio buttons)
+
+When a question has a range where two adjacent options are both acceptable
+(e.g. timing measurements that straddle a boundary), keep `MC` (radio
+buttons) and set `correct_answer` to a comma-separated list. The student
+picks ONE option; any listed index is scored correct.
+
+```bash
+# Two acceptable answers, student selects any one
+"question_type": "MC",
+"correct_answer": "3,4"
+```
+
+This is different from `CB` (checkboxes): `CB` requires the student to
+select ALL listed answers. Use `MC` with comma-separated indices when each
+answer is independently sufficient.
+
 ## Updating Questions (PATCH)
 
 ```bash
