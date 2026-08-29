@@ -1,11 +1,3 @@
-# Course Management Agent
+@AGENTS.md
 
-Claude must read [AGENTS.md](AGENTS.md) before working in this repository because it contains the current guidance for Claude and Codex.
-
-Use `AGENTS.md` for:
-
-- Course platform workflow instructions
-- Local skills
-- Platform instances and authentication
-- Course repos, slug patterns, and states
-- API source-of-truth rules
+Skills for this project live in .agents/skills (.claude/skills symlinks to it; if that link doesn't resolve, e.g. on Windows without symlink support, read them directly from .agents/skills).

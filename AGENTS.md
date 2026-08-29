@@ -33,21 +33,9 @@ All course content is located in `~/git/`:
 - `~/git/llm-zoomcamp/`: LLM course
 - `~/git/ai-dev-tools-zoomcamp/`: AI Dev Tools course
 
-This repository has local Claude/Codex workflow skills under `.claude/skills`.
-Before working on course platform content, look at the relevant local skill docs.
-
-## Local Skills
-
-Use these local skills when the request matches them:
-
-- `course-content`: Manage courses, homeworks, and projects through the course platform REST API. Use this for listing, creating, updating dates, changing states, changing descriptions, and guarded deletion of course content.
-- `homework-questions`: Manage homework questions through the REST API. Use this after identifying homework IDs with `course-content`.
-- `deploy-prod`: Trigger the production deployment workflow for `DataTalksClub/course-management-platform`.
-
 ## Notes
 
 - The generated OpenAPI spec from the target environment is the source of truth before changing course content.
-- Local skill docs are workflow guidance and may be more specific than global skills exposed by the runtime.
 - When the user gives a short instruction such as `create hw2 for llm zoomcamp 2026`, restate the concrete interpretation before acting.
 
 For `create hw2 for llm zoomcamp 2026`, use this workflow:
@@ -77,8 +65,6 @@ Use the generated OpenAPI spec as the source of truth for:
 - Responses
 - Authentication
 - Delete safety rules
-
-Local skill docs are workflow guidance only.
 
 ## Courses on Production
 
