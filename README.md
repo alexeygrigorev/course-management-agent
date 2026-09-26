@@ -9,6 +9,7 @@ Helps manage courses, homeworks, projects, and deployments for DataTalksClub zoo
 - `course-content`: Get or create homeworks and projects via API
 - `homework-questions`: Get or create questions for homeworks via API
 - `deploy-prod`: Trigger the production deployment workflow
+- `telegram-announcements`: Draft and post course announcements to Telegram channels
 
 ## Setup
 
