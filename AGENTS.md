@@ -124,3 +124,21 @@ Use these state codes:
 - `CO`: Completed
 - `PR`: Peer reviewing
 - `CS`: Collecting submissions
+
+
+## Peer Review Assignment Notification (send exactly once)
+
+After `POST /api/courses/<course>/projects/by-slug/<project>/assign-reviews/` succeeds
+(project state becomes PR), students must get the "peer reviews assigned" email.
+assign-reviews does NOT send it automatically.
+
+1. Check the sent-marker first:
+   `GET /api/datamailer/send-audits?idempotency_key=peer-review-assignment:<course>:<project>`
+   - An audit with status "succeeded" (enqueued_count > 0) means it was already sent. Do NOT send again.
+   - No audit, or only "failed" ones, means it is not sent yet and may be sent.
+2. Send: there is no API endpoint yet (requested from Dev). Until then, a staff member clicks "Notify peer reviews" in cadmin
+   (`POST /cadmin/<course>/project/<project>/notify-peer-reviews`). If the agent can't do it, ask Dev.
+3. Re-check send-audits and confirm a "succeeded" entry whose enqueued_count matches the number of submitters.
+4. Never resend. The send key is fixed per project. A deliberate resend is allowed only if the marker is intentionally
+   reset (a platform change by Dev with Alexey's approval). Never work around it.
+5. Mention the email in the Telegram announcement only after step 3 confirms it went out.
