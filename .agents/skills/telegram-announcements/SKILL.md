@@ -20,3 +20,7 @@ Check announcement facts against the relevant course repository or live course p
 5. If the request times out or its result is uncertain, check the public channel page at `https://t.me/s/<channel_username>` for the exact message before retrying. A timeout can happen after Telegram has already posted. If the channel cannot be checked and success is uncertain, report the uncertainty instead of risking a duplicate post.
 
 Do not change course deadlines, repository files, or other external systems merely because an announcement mentions them; perform those actions only when the user has requested them separately.
+
+## Templates
+
+- `templates/peer-review-ready.md`: project is ready for peer review (post after assign-reviews succeeds).
