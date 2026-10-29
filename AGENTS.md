@@ -125,6 +125,7 @@ Use these state codes:
 - `PR`: Peer reviewing
 - `CS`: Collecting submissions
 
+<<<<<<< Updated upstream
 
 ## Peer Review Assignment Notification (send exactly once)
 
@@ -142,3 +143,51 @@ assign-reviews does NOT send it automatically.
 4. Never resend. The send key is fixed per project. A deliberate resend is allowed only if the marker is intentionally
    reset (a platform change by Dev with Alexey's approval). Never work around it.
 5. Mention the email in the Telegram announcement only after step 3 confirms it went out.
+=======
+## Peer-Review-Assigned Email (Send Once)
+
+The peer-review-assigned email can be sent with a staff token instead of the
+cadmin "Notify peer reviews" button. Both use the same idempotency key,
+`peer-review-assignment:<course>:<project>`.
+
+- Check first, read-only (never sends):
+  `GET /api/courses/<course>/projects/by-slug/<project>/notify-peer-reviews/`
+  returns `sent` and the send `audit` (`status`, `enqueued_count`,
+  timestamps), or `audit: null` when nothing was sent.
+- Send:
+  `POST /api/courses/<course>/projects/by-slug/<project>/notify-peer-reviews/`.
+  It needs a staff token and the project in `PR` state. It returns `200` with
+  the succeeded audit.
+- It is send-once. A second POST, or a POST after the cadmin button already
+  sent, returns `409 peer_review_notification_already_sent` with the existing
+  audit and sends nothing. `502` means the send failed; a retry is allowed.
+- Resending after a success needs a deliberate server-side reset:
+  `manage.py reset_peer_review_notification_marker <course> <project> --confirm`.
+- The GET audit includes `skipped_recipients`: `user_id`, `email`, and a
+  machine-readable `reason` (for example `category_unsubscribe` when the
+  learner turned off `submission-results` emails, or `hard_bounce`).
+- A POST emails every project submitter. Only send on production when the
+  user explicitly asks for that course and project. Use GET to verify.
+
+```console
+$ curl -s "https://courses.datatalks.club/api/courses/<course>/projects/by-slug/<project>/notify-peer-reviews/" \
+    -H "Authorization: Token ${AUTH_TOKEN}"
+```
+
+## Send Audits and Skipped Recipients
+
+Staff-token, read-only endpoints for "why did this learner not get the
+email?":
+
+- `GET /api/datamailer/send-audits?idempotency_key=<key>` (also `email`,
+  `template_key`, `status`, `send_type`) lists audits with their `id`.
+- `GET /api/datamailer/send-audits/<id>` returns one audit with
+  `skipped_recipients` (`user_id`, `email`, `reason`, `source_object_key`,
+  `relay_message_id`, `relay_contact_id`).
+- `skipped_recipients_source` says where the details came from: `audit`
+  (stored from Relay's send response), `relay_lookup` (older audit, read from
+  Relay without writing anything), `not_recorded` (list view of an older
+  audit; open the detail endpoint), or `unavailable`.
+- Never re-send to "fix" a skip. `category_unsubscribe`, `global_unsubscribe`,
+  `hard_bounce` and `complaint` are the learner's or provider's decision.
+>>>>>>> Stashed changes
