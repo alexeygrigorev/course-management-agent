@@ -125,7 +125,6 @@ Use these state codes:
 - `PR`: Peer reviewing
 - `CS`: Collecting submissions
 
-<<<<<<< Updated upstream
 
 ## Peer Review Assignment Notification (send exactly once)
 
@@ -133,17 +132,19 @@ After `POST /api/courses/<course>/projects/by-slug/<project>/assign-reviews/` su
 (project state becomes PR), students must get the "peer reviews assigned" email.
 assign-reviews does NOT send it automatically.
 
-1. Check the sent-marker first:
-   `GET /api/datamailer/send-audits?idempotency_key=peer-review-assignment:<course>:<project>`
-   - An audit with status "succeeded" (enqueued_count > 0) means it was already sent. Do NOT send again.
-   - No audit, or only "failed" ones, means it is not sent yet and may be sent.
-2. Send: there is no API endpoint yet (requested from Dev). Until then, a staff member clicks "Notify peer reviews" in cadmin
-   (`POST /cadmin/<course>/project/<project>/notify-peer-reviews`). If the agent can't do it, ask Dev.
-3. Re-check send-audits and confirm a "succeeded" entry whose enqueued_count matches the number of submitters.
+1. Check the sent-marker first (read-only, never sends):
+   `GET /api/courses/<course>/projects/by-slug/<project>/notify-peer-reviews/`
+   (or `GET /api/datamailer/send-audits?idempotency_key=peer-review-assignment:<course>:<project>`).
+   - `sent: true` / an audit with status "succeeded" means it was already sent. Do NOT send again.
+   - `audit: null`, or a "failed" audit, means it is not sent yet and may be sent.
+2. Send with the staff-token API (details below), or a staff member clicks "Notify peer reviews" in cadmin
+   (`POST /cadmin/<course>/project/<project>/notify-peer-reviews`). Both use the same key.
+3. Re-check with GET and confirm a "succeeded" audit whose enqueued_count plus skipped_count matches the
+   number of submitters. `skipped_recipients` says who was skipped and why.
 4. Never resend. The send key is fixed per project. A deliberate resend is allowed only if the marker is intentionally
    reset (a platform change by Dev with Alexey's approval). Never work around it.
 5. Mention the email in the Telegram announcement only after step 3 confirms it went out.
-=======
+
 ## Peer-Review-Assigned Email (Send Once)
 
 The peer-review-assigned email can be sent with a staff token instead of the
@@ -190,4 +191,3 @@ email?":
   audit; open the detail endpoint), or `unavailable`.
 - Never re-send to "fix" a skip. `category_unsubscribe`, `global_unsubscribe`,
   `hard_bounce` and `complaint` are the learner's or provider's decision.
->>>>>>> Stashed changes

@@ -40,34 +40,6 @@ PATCH  /api/courses/<course_slug>/homeworks/by-slug/<slug>/    - Update by slug
 DELETE /api/courses/<course_slug>/homeworks/by-slug/<slug>/    - Guarded delete by slug
 ```
 
-### Review Criteria
-
-```
-GET    /api/courses/<course_slug>/review-criteria/      - List review criteria
-POST   /api/courses/<course_slug>/review-criteria/      - Create criterion or criteria (staff only, bulk supported)
-GET    /api/courses/<course_slug>/review-criteria/<id>/ - Criteria detail
-PATCH  /api/courses/<course_slug>/review-criteria/<id>/ - Update criteria (staff only)
-DELETE /api/courses/<course_slug>/review-criteria/<id>/ - Guarded delete (staff only)
-```
-
-Create payload (single object or JSON array):
-
-```bash
-curl -s -X POST "https://courses.datatalks.club/api/courses/<course_slug>/review-criteria/" \
-  -H "Authorization: Token ${AUTH_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "description": "Problem Description",
-    "review_criteria_type": "RB",
-    "options": [
-      {"criteria": "The problem is not described.", "score": 0},
-      {"criteria": "The problem is well described.", "score": 2}
-    ]
-  }'
-```
-
-Rules: `description` and `options` are required; `review_criteria_type` is `RB` (radio buttons) or `CB` (checkboxes), default `RB`. Criteria with recorded evaluation scores cannot be deleted, and their `review_criteria_type`/`options` cannot be changed (description stays editable). Responses include `scores_count`, `can_delete`, and `delete_blockers`.
-
 ### Projects
 
 ```
